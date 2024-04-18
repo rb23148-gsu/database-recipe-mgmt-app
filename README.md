@@ -18,11 +18,11 @@ How to set up the MySQL DB locally.
 How to set up the app locally:
 
 1. Install Python: https://www.python.org/downloads/
-2. Clone the repo locally from Github using Github Desktop or CLI.
+2. Clone this project repo locally from Github using Github Desktop or CLI.
 3. Go to the github project directory and open cmd.
 4. Run the command 'py -3 -m venv .venv' or otherwise get .venv installed for Python.
-4. If on Windows, run '.venv\Scripts\activate' without quotes to start the virtual environment. You should see some visual change in your terminal/command line to reflect that you're operating in a virtual environment.
-    4.1. If on macOS/Linux, run '.venv/bin/activate' (?? Idk if this will work since my primary machine is Windows. lmk)
+4. If on Windows, run '.venv\Scripts\activate' without quotes to start the virtual environment. You should see some visual change in your terminal/command line to reflect that you're operating in a virtual environment. 
+4.1. If on macOS/Linux, run '.venv/bin/activate' (?? Idk if this will work since my primary machine is Windows. lmk)
 5. Run 'pip install -r requirements.txt' without quotes to install dependencies locally (until I write a script to do a bunch of this automatically.)
 6. You should be able to now run 'python app.py' from the root directory of the project, which should start an app at http://localhost:5000, accessible via your browser of choice.
 7. ???
