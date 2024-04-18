@@ -1,6 +1,8 @@
 # database-recipe-mgmt-app
  Database Systems Recipe Management App
 
+ This project primarily utilizes HTML and CSS, possibly Bootstrap for the frontend, and Flask for the backend with the SQLAlchemy toolkit and a MySQL database.
+
 How to set up DB locally.
 
 1. Open up MySQL Workbench.
