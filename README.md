@@ -1,9 +1,10 @@
 # database-recipe-mgmt-app
- Database Systems Recipe Management App
+ #Database Systems Recipe Management App
 
  This project primarily utilizes HTML and CSS, possibly Bootstrap for the frontend, and Flask for the backend with the SQLAlchemy toolkit and a MySQL database.
+ 
 
-First, how to set up the MySQL DB locally:
+#First, how to set up the MySQL DB locally:
 
 1. Open up MySQL Workbench 8.
 
@@ -18,13 +19,14 @@ First, how to set up the MySQL DB locally:
 
 6. To set up the files for steps 7 and 8 automatically on Windows, just double click or open in command prompt 'create_env_and_gitignore.bat' to create the files and prepopulate the fields. All you have to do is enter your username and password for your local database in 'yourUsername' and 'yourPassword' without quotes inside the .env file.
 
-# If you can't or don't want to use the .bat file:
+If you can't or don't want to use the .bat file:
+
 7. In the project root directory, (if you didn't use the .bat file) create a file called '.env', no quotes, and add the line 'USERNAME=yourUsername' without quotes. On the next line, add 'MYSQL_PASSWORD=yourPassword' without quotes. Replace yourUsername and yourPassword with your information to log in to your database. Save it.
 
 8. In the project root directory, (if you didn't use the .bat file) create a file called '.gitignore', no quotes. On the first line, put '.env' without quotes, then save and exit. This prevents your password from being hardcoded into the program, and also from being uploaded to Github, which isn't necessarily a huge issue for this project, but it's good practice.
 
 
-Next, how to set up the app locally:
+#Next, how to set up the app locally:
 
 1. Install Python and check the 'add to the system path variables' option during setup: https://www.python.org/downloads/
 
