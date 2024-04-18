@@ -1,0 +1,36 @@
+{% extends 'base.html'%}
+
+{% block head %}
+
+{% endblock %}
+
+{% block body %}
+<a href="/">Home</a>
+<h2>Log in</h2>
+
+
+<!--Display a success message if the login is successful.--> 
+{% if 'login_success' in session %}
+<div class="alert alert-success" role="alert">
+    Login successful!
+</div>
+{% endif %}
+
+<form action="/login" method="post">
+    <div>
+        <label for="email">Email:</label>
+        <input type="text" id="username" name="email" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+</form>
+
+<!--Display an error if the login is not successful.-->
+{% if error %}
+    <p style="color: red;">{{ error }}</p>  <!-- Display error message if it exists -->
+{% endif %}
+
+{% endblock %} 
