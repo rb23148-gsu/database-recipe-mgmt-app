@@ -14,6 +14,7 @@ import dotenv
 
 # Load sensitive data in .env file (db password in a separate file to be excluded from the repo)
 dotenv.load_dotenv()
+mysql_user = os.environ.get('USERNAME')
 mysql_password = os.environ.get('MYSQL_PASSWORD')
 
 # Create app instance
@@ -23,7 +24,7 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # Specify mySQL connection
-mysql_connection = f'mysql+pymysql://root:{mysql_password}@localhost/recipe_managementdb'
+mysql_connection = f'mysql+pymysql://{mysql_user}:{mysql_password}@localhost/recipe_managementdb'
 
 # Add db to app
 app.config['SQLALCHEMY_DATABASE_URI'] = mysql_connection
