@@ -5,7 +5,7 @@
 
 How to set up the MySQL DB locally.
 
-1. Open up MySQL Workbench.
+1. Open up MySQL Workbench 8.
 2. Create a new connection, test it, make sure your password works, and give the connection a relevant name.
 3. Take note of your user and password, most likely 'root' and whatever password you decided on. You'll need it later.
 4. You should be at a blank screen with a tab called something like 'Query1'.
