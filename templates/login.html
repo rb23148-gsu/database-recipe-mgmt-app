@@ -33,4 +33,29 @@
     <p style="color: red;">{{ error }}</p>  <!-- Display error message if it exists -->
 {% endif %}
 
+<h2>New User? Register Account</h2>
+
+<form action="/register_user" method="post">
+    <div>
+        <label for="first_name">First Name:</label>
+        <input type="text" id="first_name" name="first_name" value="{{ first_name }}" required>
+    </div>
+    <div>
+        <label for="last_name">Last Name:</label>
+        <input type="text" id="last_name" name="last_name" value="{{ last_name }}" required>
+    </div>
+    <div>
+        <label for="email">Email:</label>
+        <input type="text" id="username" name="email" value="{{ email }}" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <div>
+        <label for="verify_password">Verify password:</label>
+        <input type="password" id="verify_password" name="verify_password" required>
+    </div>
+    <button type="submit">Register User</button>
+</form>
 {% endblock %} 

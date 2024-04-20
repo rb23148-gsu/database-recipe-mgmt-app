@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, url_for, session
+from flask import Flask, request, redirect, render_template, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from datetime import datetime
@@ -7,10 +7,8 @@ import dotenv
 
 
 # TODO: Add blueprints/possibly change file structure to categorize scripts by type/function depending on project size
-# Add user registration page to add new users.
-# Add date/time values for some fields.
-# Make some fields such as email unique so they can't be duplicated, e.g., email.
-# Double check project requirements to make sure I'm on track.
+# Add a "Create Recipe" route to allow the user to create a new recipe.
+# Double check relationships between tables to make sure this can happen correctly.
 
 # Load sensitive data in .env file (db password in a separate file to be excluded from the repo)
 dotenv.load_dotenv()
@@ -93,6 +91,29 @@ def print_db_info():
     # Return as HTML with br element between entries
     return '<br>'.join(info)
 
+# Test route to print the entire db.
+@app.route('/print_all_records')
+def print_all_records():
+
+    # Initialize a dictionary
+    all_records = {}
+
+    # Iterate over tables and convert entries into a dictionary with the app's resources
+    with app.app_context():
+        for table_name, table_class in Base.classes.items():
+
+            # Gets records from the current table.
+            records = db.session.query(table_class).all()
+
+            # Convert each record to a dictionary
+            record_dicts = [record.__dict__ for record in records]
+
+            # Exclude internal SQLAlchemy attributes
+            cleaned_records = [{key: value for key, value in record_dict.items() if not key.startswith('_')} for record_dict in record_dicts]
+
+            # Stores cleaned records in a dictionary wth the table name as a key.
+            all_records[table_name] = cleaned_records
+    return jsonify(all_records)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -123,6 +144,8 @@ def login():
                 session['user_id'] = user.UserID
                 session['login_success'] = True
                 session['user_first_name'] = user.FirstName
+                # Clear any errors
+                session.pop('error', None)
                 return redirect(url_for('index'))
             else:
                 # Invalid credentials, render login page with error message
@@ -132,6 +155,7 @@ def login():
     
         #Store the error message in the session
         session['error'] = error
+
     #Render login page for GET requests
     return render_template('login.html', error=error)
 
@@ -139,12 +163,54 @@ def login():
 @app.route('/logout', methods=['POST'])
 def logout():
     if request.method == 'POST':     
-        # Clear session to log out the user
+        # Clear session to log out the user and send to the homepage.
         session.clear()
         return redirect(url_for('index'))
     else:
         # Handle other methods with an error, because we only want to log out with a POST.
         return 'Method Not Allowed', 405
+
+@app.route('/register_user', methods=['POST'])
+def register_user():
+
+    # Retrieve data from the register user form
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    verify_password = request.form.get('verify_password')
+
+    # Check if the email is already registered
+    existing_user = db.session.query(Users).filter_by(Email=email).first()
+
+    # If it already exists, return with an error and autofill info to prepopulate some fields.
+    if existing_user:
+        error = 'Email is already registered'
+        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email)
+
+    # Check if the passwords match
+    # This should probably be done in Javascript first to reduce use of
+    # server resources, but I'm feeling lazy.
+    if password != verify_password:
+        error = 'Passwords do not match'
+        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email)
+
+    
+    # Create a new user
+    new_user = Users(FirstName=first_name, LastName=last_name, Email=email, Password=password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Log in the new user
+    session['user_id'] = new_user.UserID
+    session['login_success'] = True
+    session['user_first_name'] = new_user.FirstName
+    # Clear any errors
+    session.pop('error', None)
+    
+
+    # Redirect to the homepage
+    return redirect(url_for('index'))
 
 if __name__ == "__main__":
     app.run(debug=True)
