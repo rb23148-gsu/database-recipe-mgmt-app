@@ -145,10 +145,13 @@ def login():
     if 'user_id' in session:
         error = 'You are already logged in!'
         session['error'] = error
+        session['error_origin'] = 'login'
         return redirect(url_for('index'))
     
     # Default error message
     error = None
+    session.pop('error', None)
+    session.pop('error_origin', None)
     
     if request.method == 'POST':
 
@@ -171,18 +174,18 @@ def login():
                 session['user_first_name'] = user.FirstName
                 # Clear any errors
                 session.pop('error', None)
+                session.pop('error_origin', None)
                 return redirect(url_for('index'))
             else:
                 # Invalid credentials, render login page with error message
                 error = 'Invalid email or password'
-
-        # return render_template('login.html', error=error)
     
         #Store the error message in the session
         session['error'] = error
+        session['error_origin'] = 'login'
 
     #Render login page for GET requests
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error, error_origin='login')
 
 
 @app.route('/logout', methods=['POST'])
@@ -209,17 +212,22 @@ def register_user():
     # Check if the email is already registered
     existing_user = db.session.query(Users).filter_by(Email=email).first()
 
+    #Clear any existing errors.
+    session.pop('error', None)
+    session.pop('error_origin', None)
+    error=None
+
     # If the email address already exists, return with an error and autofill info to prepopulate some fields.
     if existing_user:
         error = 'Email is already registered'
-        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email)
+        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email, error_origin='register')
 
     # Check if the passwords match
     # This should probably be done in Javascript first to reduce use of
     # server resources, but I'm feeling lazy.
     if password != verify_password:
         error = 'Passwords do not match'
-        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email)
+        return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email, error_origin='register')
 
     
     # Create a new user
@@ -241,6 +249,10 @@ def register_user():
 
 @app.route('/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
+
+    #Clear any existing errors.
+    session.pop('error', None)
+    error=None
 
     # If the user is not logged in and tries to visit this page, send them to the login form.
     if 'user_id' not in session:

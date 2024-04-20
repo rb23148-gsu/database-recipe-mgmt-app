@@ -20,10 +20,6 @@
   </form>
   {% endif %}
 
-  <!-- Display error message if it exists -->
-  {% if 'error' in session %}
-  <p style="color: red;">{{ session['error'] }}</p>  
-  {% endif %}
 
   <!-- DISPLAY NAVBAR (with conditional logic based on filepath and if user is logged in)-->
   <nav>
@@ -43,6 +39,18 @@
         {% endif %}
     </ul>
 </nav>
+
+{% if 'error' in session %}
+    {% if session['error_origin'] == 'login' %}
+        <p style="color: red;">Login Error: {{ session['error'] }}</p>
+    {% elif session['error_origin'] == 'register' %}
+        <p style="color: red;">Registration Error: {{ session['error'] }}</p>
+    {% else %}
+        <p style="color: red;">{{ session['error'] }}</p>
+    {% endif %}
+{% elif error %}
+    <p style="color: red;">{{ error }}</p>
+{% endif %}
 
   {% block body %}
   
