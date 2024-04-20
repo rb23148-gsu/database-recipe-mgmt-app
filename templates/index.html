@@ -6,28 +6,7 @@
 
 
 {% block body %}
-<h1>Welcome to the Recipe Management App!</h1>
 
-{% if 'user_id' in session %}
-Hello, {{ session['user_first_name'] }}
-{% endif %}
 
-{% if 'user_id' in session %}
-<!-- If user is logged in, display the logout button -->
-<form action="{{ url_for('logout') }}" method="post">
-    <button type="submit" class="btn btn-outline-danger">Logout</button>
-</form>
-{% else %}
-<!-- If no user is logged in, display the login button -->
-<!--<form action="{{ url_for('login') }}" method="post">
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>-->
-<a href="{{ url_for('login') }}">Login</a>
-{% endif %}
 
-{% if 'error' in session %}
-    <p style="color: red;">{{ session['error'] }}</p>  <!-- Display error message if it exists -->
-{% endif %}
-
-<!--<a href="/login">Login</a>-->
 {% endblock %} 

@@ -5,8 +5,8 @@
 {% endblock %}
 
 {% block body %}
-<a href="/">Home</a>
-<h2>Log in</h2>
+
+<h1>Log in</h1>
 
 
 <!--Display a success message if the login is successful.--> 
@@ -27,7 +27,7 @@
     </div>
     <button type="submit">Login</button>
 </form>
-
+<br />
 <!--Display an error if the login is not successful.-->
 {% if error %}
     <p style="color: red;">{{ error }}</p>  <!-- Display error message if it exists -->

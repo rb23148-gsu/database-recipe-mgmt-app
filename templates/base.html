@@ -5,9 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <!-- Creates a block in the template to insert code on other pages that inherit this template-->
-    {% block head %}{% endblock %}
+    {% block head %}
+    
+    {% endblock %}
 </head>
 <body>
-  {% block body %}{% endblock %}  
+  <h1>Welcome to the Recipe Management App!</h1>
+
+  <!-- If the user is logged in, show the user's name and a logout button -->
+  {% if 'user_id' in session %}
+    Hello, {{ session['user_first_name'] }}
+    <form action="{{ url_for('logout') }}" method="post">
+      <button type="submit" class="btn">Logout</button>
+  </form>
+  {% endif %}
+
+  <!-- Display error message if it exists -->
+  {% if 'error' in session %}
+  <p style="color: red;">{{ session['error'] }}</p>  
+  {% endif %}
+
+  <!-- DISPLAY NAVBAR (with conditional logic based on filepath and if user is logged in)-->
+  <nav>
+    <ul>
+        <!-- If the user is NOT logged in and not on the login page, show the login link -->
+        {% if 'user_id' not in session and request.path != '/login' %}
+            <li><a href="/login">Login</a></li>
+
+        <!-- If the user is logged in, show the create recipe link -->
+        {% elif 'user_id' in session and request.path != '/create_recipe' %}
+                <li><a href="/create_recipe">Create Recipe</a></li>
+        {% endif %}
+
+        <!-- If the user is not on the homepage, show the link to the homepage -->
+        {% if request.path != '/' %}
+            <li><a href="/">Home</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+  {% block body %}
+  
+  {% endblock %}  
 </body>
 </html>

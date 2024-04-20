@@ -53,3 +53,27 @@ CREATE TABLE Recipe_Ingredients (
 
 INSERT INTO Users (FirstName, LastName, Email, Password)
 VALUES ('John', 'Doe', 'test@test.com', 'password');
+
+-- Quantity is already tied to Recipe_Ingredients table, so this is probably redundant.
+ALTER TABLE ingredients DROP COLUMN Quantity;
+
+-- 'Type' is too generic, or I just forgot what we were going to use it for. Seems like a duplicate of Category. Either way, it's gone for now.
+ALTER TABLE recipe DROP COLUMN Type;
+
+-- Removed Units from Ingredients Table since it already exists in Recipe_Ingredients.
+ALTER TABLE ingredients DROP COLUMN Unit;
+
+INSERT INTO Category (Name)
+VALUES ('Breakfast');
+
+INSERT INTO Category (Name)
+VALUES ('Lunch');
+
+INSERT INTO Category (Name)
+VALUES ('Dinner');
+
+DELETE FROM recipe;
+DELETE FROM ingredients;
+DELETE FROM recipe_ingredients;
+
+SELECT * from recipe;
