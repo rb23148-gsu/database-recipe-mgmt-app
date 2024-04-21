@@ -1,0 +1,29 @@
+{% extends 'base.html'%}
+<title>{{ recipe.Name }}</title>
+{% block head %}
+
+{% endblock %}
+
+
+{% block body %}
+
+<h1>{{ recipe.Name }}</h1>
+<br>
+<p>By: {{ user_first_name }} {{ user_last_initial}}</p>
+<br>
+<h3>Description:</h3>
+<p>{{ recipe.Description }}</p>
+<br>
+<!-- Use a Jinja2 loop to show all available ingredients for a recipe!-->
+<h3>Ingredients:</h3>
+    <ul>
+        {% for ingredient, quantity, unit in ingredients %}
+            <li>{{ quantity }} {{ unit }} {{ ingredient.Name }}</li>
+        {% endfor %}
+    </ul>
+
+<br>
+<p><strong>Instructions:</strong></p>
+<p>{{ recipe.Instructions }}</p>
+
+{% endblock %} 

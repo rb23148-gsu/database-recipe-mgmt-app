@@ -14,7 +14,7 @@
 
   <!-- If the user is logged in, show the user's name and a logout button -->
   {% if 'user_id' in session %}
-    Hello, {{ session['user_first_name'] }}
+    Hello, {{ session['user_first_name'] }}!
     <form action="{{ url_for('logout') }}" method="post">
       <button type="submit" class="btn">Logout</button>
   </form>
@@ -24,21 +24,39 @@
   <!-- DISPLAY NAVBAR (with conditional logic based on filepath and if user is logged in)-->
   <nav>
     <ul>
-        <!-- If the user is NOT logged in and not on the login page, show the login link -->
-        {% if 'user_id' not in session and request.path != '/login' %}
-            <li><a href="/login">Login</a></li>
-
-        <!-- If the user is logged in, show the create recipe link -->
-        {% elif 'user_id' in session and request.path != '/create_recipe' %}
-                <li><a href="/create_recipe">Create Recipe</a></li>
-        {% endif %}
-
         <!-- If the user is not on the homepage, show the link to the homepage -->
         {% if request.path != '/' %}
             <li><a href="/">Home</a></li>
         {% endif %}
+
+        <!-- If the user is NOT logged in and not on the login page, show the login link -->
+        {% if 'user_id' not in session and request.path != '/login' %}
+            <li><a href="/login">Login</a></li>
+        {% endif %}
+
+        <!-- If the user is logged in, show the create recipe link -->
+        {% if 'user_id' in session and request.path != '/create_recipe' %}
+            <li><a href="/create_recipe">Create Recipe</a></li>
+        {% endif %}
+
+        <!-- If the user is logged in and is on a recipe page owned by them, show the delete recipe button -->    
+        {% if 'user_id' in session and request.path.startswith('/view_recipe/') %}
+            {% if recipe and recipe.UserID == session['user_id'] %}
+            <li><a href="/delete_recipe/{{ recipe.RecipeID }}">Delete Recipe</a></li>
+            {% endif %}
+        {% endif %}
+
+        
     </ul>
 </nav>
+
+{% if recipe %}
+<ul>
+    <li><a href="/view_recipe/{{ prev_recipe_id }}">Previous</a></li>
+    <li><a href="/view_recipe/{{ next_recipe_id }}">Next</a></li>
+</ul>
+    
+{% endif %}
 
 {% if 'error' in session %}
     {% if session['error_origin'] == 'login' %}

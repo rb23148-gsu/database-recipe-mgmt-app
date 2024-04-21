@@ -320,7 +320,7 @@ def create_recipe():
             # Check if the ingredient already exists
             existing_ingredient = db.session.query(Ingredient).filter_by(Name=ingredient_name).first()
 
-             # If the ingredient does not exist, create a new entry
+             # If the ingredient does not exist, create a new ingredient entry
             if not existing_ingredient:
                 new_ingredient = Ingredient(Name=ingredient_name)
                 db.session.add(new_ingredient)
@@ -334,13 +334,60 @@ def create_recipe():
             db.session.commit()
 
         # Redirect to recipe detail page ideally. (Homepage for now.)
-        return redirect(url_for('index', recipe_id=new_recipe.RecipeID))
+        return redirect(url_for('view_recipe', recipe_id=new_recipe.RecipeID))
 
     else:
         # Render the create recipe form with categories for dropdown.
         categories = db.session.query(Category).all()  
         return render_template('create_recipe.html', categories=categories)
 
+# View a recipe by its id.
+@app.route('/view_recipe/<int:recipe_id>')
+def view_recipe(recipe_id):
+
+    # Query the database for the recipe by its id.
+    recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
+
+    # If the recipe doesn't exist, return a 404 error.
+    if recipe:
+
+        # Query the Users table with the recipe's userID to get the author.
+        user = db.session.query(Users).filter_by(UserID=recipe.UserID).first()
+
+        # Grab first name and last initial so we can display it on the page.
+        user_first_name = user.FirstName
+        user_last_name = user.LastName
+        user_last_initial = user_last_name[0] + '.'
+
+        # Get a list of valid recipe IDs for navigation purposes using list comprehension
+        valid_recipe_ids = sorted([result.RecipeID for result in db.session.query(Recipe).all()])
+
+        # Take note of how many recipes we have.
+        num_recipes = len(valid_recipe_ids)
+
+        # Find this recipe's current position in the list of recipes.
+        current_recipe_index = valid_recipe_ids.index(recipe_id)
+
+        # Assign values to send to the Prev and Next Recipe buttons so that the user can endlessly
+        # scroll by having the recipes wrap around either way with a modulo operator.
+        prev_recipe_id = valid_recipe_ids[(current_recipe_index - 1) % num_recipes]
+        next_recipe_id = valid_recipe_ids[(current_recipe_index + 1) % num_recipes]
+
+
+    else:
+
+        # Show an error if the page is not a valid recipe id.
+        error='Recipe not found'
+        # flash(error, 'error')
+        return render_template('error.html', error=error), 404
+    
+    # Get the list of ingredients, quantity, and units for the recipe  by joining the Recipe_Ingredient table to the Ingredients table based on the given recipeID.
+    ingredients = db.session.query(Ingredient, RecipeIngredient.Quantity, RecipeIngredient.Units).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
+    
+    # Return the view_recipe.html view with recipe, ingredient, user data, and prev/next Recipe ids for an endless recipe loop.
+    return render_template('view_recipe.html', recipe=recipe, ingredients=ingredients, 
+                           user_first_name=user_first_name, user_last_initial=user_last_initial, 
+                           prev_recipe_id=prev_recipe_id, next_recipe_id=next_recipe_id)
 
 if __name__ == "__main__":
     app.run(debug=True)
