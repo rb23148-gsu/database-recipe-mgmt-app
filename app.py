@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, url_for, session, jsonify
+from flask import Flask, request, redirect, render_template, url_for, session, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from datetime import datetime
@@ -31,7 +31,7 @@ mysql_password = os.environ.get('MYSQL_PASSWORD')
 # Create app instance
 app = Flask(__name__)
 
-# Set secret key for login session
+# Set secret key for login session (cryptographically signed, not encrypted.)
 app.secret_key = os.urandom(24)
 
 # Specify mySQL connection
@@ -69,8 +69,8 @@ def index():
 
         # Send them to the homepage.
         return render_template('index.html')
+    # Render the homepage as well as any errors
     else:
-        # Render the homepage as well as any errors.
 
         # Check for error messages to display.
         error = session.pop('error', None)
@@ -135,6 +135,7 @@ def print_all_records():
 
             # Stores cleaned records in a dictionary wth the table name as a key.
             all_records[table_name] = cleaned_records
+
     return jsonify(all_records)
 
 # Define a login route.
@@ -148,7 +149,7 @@ def login():
         session['error_origin'] = 'login'
         return redirect(url_for('index'))
     
-    # Default error message
+    # Default error message to none.
     error = None
     session.pop('error', None)
     session.pop('error_origin', None)
@@ -160,7 +161,7 @@ def login():
         password = request.form.get('password')
 
         # If the email or password are empty, return an error.
-        if not email or not password:
+        if not email.strip() or not password.strip():
             error = 'Email and password are required'
 
         else:
@@ -269,6 +270,39 @@ def create_recipe():
         category_id = request.form['category_id']
         user_id = session['user_id']
 
+        # Retrieve form data for ingredients, quantities, and units, zipping them all together in chunks
+        ingredients = request.form.getlist('ingredient')
+        quantities = request.form.getlist('quantity')
+        units = request.form.getlist('unit')
+
+        # Check if data fields are blank
+        if not name.strip():
+            error = 'Recipe must have a name.'
+
+        elif not description.strip():
+            error = 'Recipe must have a description.'
+        
+        elif not instructions.strip():
+            error = 'Recipe must have instructions.'
+
+        elif not category_id.strip():
+            error = 'Recipe must be assigned a category.'
+        
+        elif not ingredients:
+            error = 'Recipe must have at least one ingredient.'
+
+        # If there's any error, display it and render the form again using flash
+        # Flash() displays a message to the user without needing to persist across requests.
+        if error:
+
+            # Flash error to user.
+            flash(error, 'error')
+
+            # Get categories for the new page render.
+            categories = db.session.query(Category).all()
+            return render_template('create_recipe.html', categories=categories)
+
+        # If validation checks out:
         # Create a new recipe object
         new_recipe = Recipe(Name=name, Description=description, Instructions=instructions, 
                             CategoryID=category_id, UserID=user_id, CreatedAt=datetime.now())
@@ -276,11 +310,6 @@ def create_recipe():
         # Add recipe to database
         db.session.add(new_recipe)
         db.session.commit()
-
-        # Retrieve form data for ingredients, quantities, and units, zipping them all together in chunks
-        ingredients = request.form.getlist('ingredient')
-        quantities = request.form.getlist('quantity')
-        units = request.form.getlist('unit')
 
         # Create Ingredient and RecipeIngredient objects
         # It's structured this way because of the relationship between Ingredients and Recipe_Ingredients, and
@@ -291,20 +320,15 @@ def create_recipe():
             # Check if the ingredient already exists
             existing_ingredient = db.session.query(Ingredient).filter_by(Name=ingredient_name).first()
 
-            # If the ingredient does exist, get its id.
-            if existing_ingredient:
-                ingredient_id = existing_ingredient.IngredientID
-            else:
-                # Create a new ingredient entry if it doesn't exist
-                new_ingredient = Ingredient(Name=ingredient_name, RecipeID=new_recipe.RecipeID)
+             # If the ingredient does not exist, create a new entry
+            if not existing_ingredient:
+                new_ingredient = Ingredient(Name=ingredient_name)
                 db.session.add(new_ingredient)
                 db.session.commit()
-
-                # Store the ingredient id for use in the recipe_ingredient table
-                ingredient_id = new_ingredient.IngredientID
+                existing_ingredient = new_ingredient
 
             # Create a new recipe_ingredient entry
-            new_recipe_ingredient = RecipeIngredient(RecipeID=new_recipe.RecipeID, IngredientID=ingredient_id,
+            new_recipe_ingredient = RecipeIngredient(RecipeID=new_recipe.RecipeID, IngredientID=existing_ingredient.IngredientID,
                                                     Units=unit, Quantity=quantity, CreatedAt=datetime.now())
             db.session.add(new_recipe_ingredient)
             db.session.commit()
@@ -313,8 +337,8 @@ def create_recipe():
         return redirect(url_for('index', recipe_id=new_recipe.RecipeID))
 
     else:
-        # Render the create recipe form
-        categories = db.session.query(Category).all()  # Get all categories for dropdown
+        # Render the create recipe form with categories for dropdown.
+        categories = db.session.query(Category).all()  
         return render_template('create_recipe.html', categories=categories)
 
 

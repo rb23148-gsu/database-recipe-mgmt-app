@@ -33,20 +33,16 @@ CREATE TABLE Recipe (
 
 CREATE TABLE Ingredients (
     IngredientID INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(255) NOT NULL,
-    Quantity DECIMAL(10,2) NOT NULL,
-    Unit VARCHAR(50),
-    RecipeID INT,
-    FOREIGN KEY (RecipeID) REFERENCES Recipe(RecipeID)
+    Name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE Recipe_Ingredients (
-    RecipeID INT NOT NULL AUTO_INCREMENT,
+    RecipeIngredientID INT PRIMARY KEY AUTO_INCREMENT,
+    RecipeID INT NOT NULL,
     IngredientID INT NOT NULL,
     Units VARCHAR(255),
     Quantity DECIMAL(10,2) NOT NULL,
     CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (RecipeID, IngredientID),
     FOREIGN KEY (RecipeID) REFERENCES Recipe(RecipeID),
     FOREIGN KEY (IngredientID) REFERENCES Ingredients(IngredientID)
 );
@@ -55,13 +51,13 @@ INSERT INTO Users (FirstName, LastName, Email, Password)
 VALUES ('John', 'Doe', 'test@test.com', 'password');
 
 -- Quantity is already tied to Recipe_Ingredients table, so this is probably redundant.
-ALTER TABLE ingredients DROP COLUMN Quantity;
+-- ALTER TABLE ingredients DROP COLUMN Quantity;
 
 -- 'Type' is too generic, or I just forgot what we were going to use it for. Seems like a duplicate of Category. Either way, it's gone for now.
-ALTER TABLE recipe DROP COLUMN Type;
+-- ALTER TABLE recipe DROP COLUMN Type;
 
 -- Removed Units from Ingredients Table since it already exists in Recipe_Ingredients.
-ALTER TABLE ingredients DROP COLUMN Unit;
+-- ALTER TABLE ingredients DROP COLUMN Unit;
 
 INSERT INTO Category (Name)
 VALUES ('Breakfast');
@@ -72,8 +68,13 @@ VALUES ('Lunch');
 INSERT INTO Category (Name)
 VALUES ('Dinner');
 
-DELETE FROM recipe;
-DELETE FROM ingredients;
-DELETE FROM recipe_ingredients;
+-- DELETE FROM recipe;
+-- DELETE FROM ingredients;
+-- DELETE FROM recipe_ingredients;
 
-SELECT * from recipe;
+-- 4/21 notes:
+-- Removed RecipeID from Ingredients Table since it already exists in Recipe_Ingredients.
+-- ALTER TABLE ingredients DROP COLUMN RecipeID;
+
+-- Removed composite primary key from recipe_ingredients, gave recipe_ingredients its own primary key.
+-- Redefined db setup code.
