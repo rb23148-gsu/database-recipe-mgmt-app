@@ -11,7 +11,7 @@ import dotenv
 # Consider instructions to be inserted in a number of steps like ingredients to give it structure and automatically number them. 
 #   (might skip for now until more functionality is added towards project completion.)
 # Consider standardizing metric/imperial units instead of just letting users input whatever they want.
-# If an ingredient name already exists, look at updating the recipeID column for that ingredient so we can see all recipes that use a particular ingredient if we wanted to.
+# Implement category functionality to generate categories by ingredient, e.g., chicken, beef, etc.
 # Do more testing on the Create Recipe route to make sure it's going to work with existing ingredients, etc.
 # Upon recipe creation, the user should be forwarded to their new recipe page.
 # Look into allowing user image uploads for their recipes.
@@ -203,6 +203,11 @@ def logout():
 @app.route('/register_user', methods=['POST'])
 def register_user():
 
+    #Clear any existing errors.
+    session.pop('error', None)
+    session.pop('error_origin', None)
+    error=None
+
     # Retrieve data from the register user form
     first_name = request.form.get('first_name')
     last_name = request.form.get('last_name')
@@ -210,13 +215,9 @@ def register_user():
     password = request.form.get('password')
     verify_password = request.form.get('verify_password')
 
+    # Input validation:
     # Check if the email is already registered
     existing_user = db.session.query(Users).filter_by(Email=email).first()
-
-    #Clear any existing errors.
-    session.pop('error', None)
-    session.pop('error_origin', None)
-    error=None
 
     # If the email address already exists, return with an error and autofill info to prepopulate some fields.
     if existing_user:
@@ -231,6 +232,7 @@ def register_user():
         return render_template('login.html', error=error, first_name=first_name, last_name=last_name, email=email, error_origin='register')
 
     
+    # If all input validation is successful:
     # Create a new user
     new_user = Users(FirstName=first_name, LastName=last_name, Email=email, Password=password)
     db.session.add(new_user)
@@ -241,7 +243,7 @@ def register_user():
     session['login_success'] = True
     session['user_first_name'] = new_user.FirstName
 
-    # Clear any errors
+    # Clear any errors. (should probably use flash() instead)
     session.pop('error', None)
 
     # Redirect to the homepage
@@ -291,6 +293,9 @@ def create_recipe():
         elif not ingredients:
             error = 'Recipe must have at least one ingredient.'
 
+        # Remove commas from entered quantities because they're throwing errors on creation.
+        cleaned_quantities = [quantity.replace(',', '') for quantity in quantities]
+
         # If there's any error, display it and render the form again using flash
         # Flash() displays a message to the user without needing to persist across requests.
         if error:
@@ -315,7 +320,7 @@ def create_recipe():
         # It's structured this way because of the relationship between Ingredients and Recipe_Ingredients, and
         # also because these three fields are one unit on the Create Recipe page.
         # Create tuples from each set of these fields.
-        for ingredient_name, quantity, unit in zip(ingredients, quantities, units):
+        for ingredient_name, quantity, unit in zip(ingredients, cleaned_quantities, units):
 
             # Check if the ingredient already exists
             existing_ingredient = db.session.query(Ingredient).filter_by(Name=ingredient_name).first()
@@ -345,10 +350,10 @@ def create_recipe():
 @app.route('/view_recipe/<int:recipe_id>')
 def view_recipe(recipe_id):
 
-    # Query the database for the recipe by its id.
+    # Query the database for the recipe by its id, creating a recipe object.
     recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
 
-    # If the recipe doesn't exist, return a 404 error.
+    # If the recipe does exist, get the recipe information
     if recipe:
 
         # Query the Users table with the recipe's userID to get the author.
@@ -359,7 +364,7 @@ def view_recipe(recipe_id):
         user_last_name = user.LastName
         user_last_initial = user_last_name[0] + '.'
 
-        # Get a list of valid recipe IDs for navigation purposes using list comprehension
+        # Get a list of sorted valid recipe IDs for navigation purposes using list comprehension.
         valid_recipe_ids = sorted([result.RecipeID for result in db.session.query(Recipe).all()])
 
         # Take note of how many recipes we have.
@@ -373,7 +378,7 @@ def view_recipe(recipe_id):
         prev_recipe_id = valid_recipe_ids[(current_recipe_index - 1) % num_recipes]
         next_recipe_id = valid_recipe_ids[(current_recipe_index + 1) % num_recipes]
 
-
+    # otherwise, return a 404 error.
     else:
 
         # Show an error if the page is not a valid recipe id.
@@ -382,7 +387,13 @@ def view_recipe(recipe_id):
         return render_template('error.html', error=error), 404
     
     # Get the list of ingredients, quantity, and units for the recipe  by joining the Recipe_Ingredient table to the Ingredients table based on the given recipeID.
-    ingredients = db.session.query(Ingredient, RecipeIngredient.Quantity, RecipeIngredient.Units).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
+    ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
+    print("ingredients from the query: ", ingredients)
+
+    # Debug print to console
+    # print('Length of ingredients is: ', len(ingredients))
+    # for quantity, unit, ingredient in ingredients:
+    #     print(f'Ingredient: Quantity: {quantity}, Units: {unit}, {ingredient.Name}')
     
     # Return the view_recipe.html view with recipe, ingredient, user data, and prev/next Recipe ids for an endless recipe loop.
     return render_template('view_recipe.html', recipe=recipe, ingredients=ingredients, 
