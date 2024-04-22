@@ -25,6 +25,7 @@ CREATE TABLE Recipe (
     Instructions TEXT NOT NULL,
     CategoryID INT,
     UserID INT,
+    ImageURL VARCHAR(255),
     CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
     FOREIGN KEY (UserID) REFERENCES Users(UserID)
@@ -77,3 +78,7 @@ VALUES ('Dinner');
 
 -- Removed composite primary key from recipe_ingredients, gave recipe_ingredients its own primary key.
 -- Redefined db setup code.
+
+-- Add an imageURL attribute to associate an image to a recipe.
+-- ALTER TABLE Recipe
+-- ADD COLUMN ImageURL VARCHAR(255);

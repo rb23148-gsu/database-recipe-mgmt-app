@@ -1,9 +1,10 @@
-from flask import Flask, request, redirect, render_template, url_for, session, jsonify, flash
+from flask import Flask, request, redirect, render_template, url_for, session, jsonify, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from datetime import datetime
 import os
 import dotenv
+from werkzeug.utils import secure_filename
 
 
 # TODO: Add blueprints/possibly change file structure to categorize scripts by type/function depending on project size
@@ -39,6 +40,13 @@ mysql_connection = f'mysql+pymysql://{mysql_user}:{mysql_password}@localhost/rec
 
 # Add db to app
 app.config['SQLALCHEMY_DATABASE_URI'] = mysql_connection
+
+# Set image upload folder to a local folder since this is a small app.
+UPLOAD_FOLDER = 'images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Define allowed image extensions.
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(app)
@@ -149,6 +157,12 @@ def login():
         session['error_origin'] = 'login'
         return redirect(url_for('index'))
     
+    elif 'error' in session:
+
+        # Display any errors if available.
+        error = session.pop('error', None)
+        return render_template('login.html', error=error)
+
     # Default error message to none.
     error = None
     session.pop('error', None)
@@ -249,6 +263,30 @@ def register_user():
     # Redirect to the homepage
     return redirect(url_for('index'))
 
+# Only allow certain file extensions for uploads when adding images to recipes.
+def allowed_file(filename):
+
+    # Check the filename's extension
+    if '.' in filename:
+
+        # Split the filename at the last dot using a right split, once from the right.
+        # Access the second element, [1], which would be the file extension and convert to 
+        # lowercase for comparison.
+        extension = filename.rsplit('.', 1)[1].lower()
+
+        # Check if the extension is in the set of allowed extensions
+        if extension in ALLOWED_EXTENSIONS:
+            return True
+        
+    return False
+
+
+# Define a route to serve static image files
+@app.route('/images/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 
 @app.route('/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
@@ -260,6 +298,8 @@ def create_recipe():
     # If the user is not logged in and tries to visit this page, send them to the login form.
     if 'user_id' not in session:
 
+        error='You must be logged in to create a recipe!'
+        session['error'] = error
         # Redirect to login page if user is not logged in
         return redirect(url_for('login'))
 
@@ -293,7 +333,7 @@ def create_recipe():
         elif not ingredients:
             error = 'Recipe must have at least one ingredient.'
 
-        # Remove commas from entered quantities because they're throwing errors on creation.
+        # Remove commas from entered quantities because they're throwing errors on recipe creation.
         cleaned_quantities = [quantity.replace(',', '') for quantity in quantities]
 
         # If there's any error, display it and render the form again using flash
@@ -307,10 +347,42 @@ def create_recipe():
             categories = db.session.query(Category).all()
             return render_template('create_recipe.html', categories=categories)
 
+        # Check if an image file was uploaded
+        if 'image' in request.files:
+
+            file = request.files['image']
+
+            # Check if the file is not empty and also allowed.
+            if file.filename != '' and allowed_file(file.filename):
+
+                # Sanitize filename before storing or using it.
+                filename = secure_filename(file.filename)
+
+                # Set filepath to our designated folder.
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+                # Construct the image URL
+                image_url = f"/images/{filename}"
+
+                #Save the filepath
+                file.save(filepath)
+
+                flash('Image uploaded successfully')
+            else:
+
+                # Set filepath to None if image upload failed
+                flash('Invalid file format for image upload', 'error')
+                filepath = None  
+
+        # Set filepath to None if no image was uploaded
+        else:
+            filepath = None  
+
         # If validation checks out:
         # Create a new recipe object
         new_recipe = Recipe(Name=name, Description=description, Instructions=instructions, 
-                            CategoryID=category_id, UserID=user_id, CreatedAt=datetime.now())
+                            CategoryID=category_id, UserID=user_id, CreatedAt=datetime.now(), ImageURL=image_url)
+
 
         # Add recipe to database
         db.session.add(new_recipe)
@@ -338,13 +410,14 @@ def create_recipe():
             db.session.add(new_recipe_ingredient)
             db.session.commit()
 
-        # Redirect to recipe detail page ideally. (Homepage for now.)
+        # Redirect to view recipe page
         return redirect(url_for('view_recipe', recipe_id=new_recipe.RecipeID))
 
     else:
         # Render the create recipe form with categories for dropdown.
         categories = db.session.query(Category).all()  
         return render_template('create_recipe.html', categories=categories)
+
 
 # View a recipe by its id.
 @app.route('/view_recipe/<int:recipe_id>')

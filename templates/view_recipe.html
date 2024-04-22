@@ -10,7 +10,12 @@
 <h1>{{ recipe.Name }}</h1>
 <br>
 <p>By: {{ user_first_name }} {{ user_last_initial}}</p>
-<br>
+
+<!-- If an image exists, display it! -->
+{% if recipe.ImageURL %}
+    <img src="{{ recipe.ImageURL }}" alt="Recipe Image">
+{% endif %}
+
 <h3>Description:</h3>
 <p>{{ recipe.Description }}</p>
 <br>
