@@ -96,12 +96,13 @@
           <a href="/view_recipe/{{ recipe.RecipeID }}">
               <h2>{{ recipe.Name }}</h2>
           </a>
+          <p>{{ recipe.Description }}</p>
           {% if recipe.ImageURL %}
           <a href="/view_recipe/{{ recipe.RecipeID }}">
               <img src="{{ recipe.ImageURL }}" alt="{{ recipe.Name }}">
           </a>
           {% endif %}
-          <p>{{ recipe.Description }}</p>
+          
       </div>
       {% endfor %}
   </div>
