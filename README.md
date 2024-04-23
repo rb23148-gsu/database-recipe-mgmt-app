@@ -38,7 +38,7 @@
 
 5. If on Windows, run '.venv\Scripts\activate' without quotes to start the virtual environment. A virtual environment lets you have different dependencies on a per-project basis instead of trying to use whatever you have installed on your system. It makes the project more portable since you'll usually have a list of dependencies to install, such as in requirements.txt, which you'll see in a couple of steps. When you activate your virtual environment successfully, you should see some visual change in your terminal/command line to reflect that you're operating in a virtual environment. For me, it's green text on my command line that says '(.venv)' at the start of the line. 
 
-5.1. If on macOS/Linux, run '.venv/bin/activate' (?? Idk if this will work since my primary machine is Windows. lmk)
+5.1. If on macOS/Linux, run 'source venv/bin/activate'
 
 6. Run 'pip install -r requirements.txt' without quotes to install dependencies locally from the requirements file. 
 
