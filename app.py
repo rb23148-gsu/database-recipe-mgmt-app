@@ -69,6 +69,9 @@ with app.app_context():
 @app.route('/', methods=['GET', 'POST'])
 def index():
 
+    # Query all recipes to show to the user on the front page.
+    recipes = db.session.query(Recipe).all()
+
     # Check if user is already logged in
     if 'user_id' in session:
 
@@ -76,7 +79,7 @@ def index():
         user_id = session['user_id']
 
         # Send them to the homepage.
-        return render_template('index.html')
+        return render_template('index.html', recipes=recipes)
     # Render the homepage as well as any errors
     else:
 
@@ -84,7 +87,51 @@ def index():
         error = session.pop('error', None)
 
         # Go to the homepage and send any errors to be displayed.
-        return render_template('index.html', error=error)
+        return render_template('index.html', recipes=recipes, error=error)
+    
+
+def get_user_attributes():
+    # Retrieve user ID from the session
+    user_id = session.get('user_id')
+    if user_id:
+        # Fetch user attributes based on user ID
+        user_attributes = db.session.query(Users).filter_by(UserID=user_id).first()
+        if user_attributes:
+            allergens = user_attributes.Allergens.split(",") if hasattr(user_attributes, 'Allergens') else []
+            dislikes = user_attributes.Dislikes.split(",") if hasattr(user_attributes, 'Dislikes') else []
+            return allergens, dislikes
+    return None, None
+
+
+def check_user_preferences(recipe):
+
+    # Retrieve user attributes for allergens and dislikes
+    allergens, dislikes = get_user_attributes()
+
+    # Create a set for unique warning messages
+    warnings = set()
+
+    # Check allergens and dislikes if they are present in the user's profile.
+    if allergens is not None and dislikes is not None:
+
+        # Get ingredients from the recipe and iterate over them, splitting them, and comparing them with the user's preferences.
+        ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe.RecipeID).all()
+        for quantity, units, ingredient in ingredients:
+            ingredient_name = ingredient.Name.split()  
+            for keyword in ingredient_name:
+                keyword = keyword.strip().lower()
+                print('keyword: ', keyword)
+
+                # If present, log a warning message to be sent to appear on the page.
+                for allergen in allergens:
+                    if allergen.strip().lower() == keyword:
+                        warnings.add("This recipe contains ingredients you are allergic to.")
+                        break
+                for dislike in dislikes:
+                    if dislike.strip().lower() == keyword:
+                        warnings.add("This recipe contains ingredients you dislike.")
+                        break
+    return warnings
 
 
 # Test route to print all table names in the db
@@ -145,6 +192,7 @@ def print_all_records():
             all_records[table_name] = cleaned_records
 
     return jsonify(all_records)
+
 
 # Define a login route.
 @app.route('/login', methods=['GET', 'POST'])
@@ -263,6 +311,7 @@ def register_user():
     # Redirect to the homepage
     return redirect(url_for('index'))
 
+
 # Only allow certain file extensions for uploads when adding images to recipes.
 def allowed_file(filename):
 
@@ -347,6 +396,9 @@ def create_recipe():
             categories = db.session.query(Category).all()
             return render_template('create_recipe.html', categories=categories)
 
+        # Initialize image_url as None
+        image_url = None
+
         # Check if an image file was uploaded
         if 'image' in request.files:
 
@@ -425,7 +477,9 @@ def view_recipe(recipe_id):
 
     # Query the database for the recipe by its id, creating a recipe object.
     recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
-
+    # Check user preferences for this recipe
+    warnings = check_user_preferences(recipe)
+    print('warnings: ', warnings)
     # If the recipe does exist, get the recipe information
     if recipe:
 
@@ -461,7 +515,7 @@ def view_recipe(recipe_id):
     
     # Get the list of ingredients, quantity, and units for the recipe  by joining the Recipe_Ingredient table to the Ingredients table based on the given recipeID.
     ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
-    print("ingredients from the query: ", ingredients)
+    # print("ingredients from the query: ", ingredients)
 
     # Debug print to console
     # print('Length of ingredients is: ', len(ingredients))
@@ -471,7 +525,171 @@ def view_recipe(recipe_id):
     # Return the view_recipe.html view with recipe, ingredient, user data, and prev/next Recipe ids for an endless recipe loop.
     return render_template('view_recipe.html', recipe=recipe, ingredients=ingredients, 
                            user_first_name=user_first_name, user_last_initial=user_last_initial, 
-                           prev_recipe_id=prev_recipe_id, next_recipe_id=next_recipe_id)
+                           prev_recipe_id=prev_recipe_id, next_recipe_id=next_recipe_id, warnings=warnings)
+
+
+
+
+@app.route('/edit_recipe/<int:recipe_id>', methods=['GET', 'POST'])
+def edit_recipe(recipe_id):
+    # Check if the user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    # Get the recipe from the database
+    recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
+
+    # Check if the recipe exists
+    if not recipe:
+        flash("That recipe was not found!", 'error')
+        return redirect(url_for('home'))
+
+    # Check if the logged in user is the owner of the recipe
+    if recipe.UserID != session['user_id']:
+        flash("You are not authorized to edit this recipe.", 'error')
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        # Retrieve form data
+        name = request.form['name']
+        description = request.form['description']
+        instructions = request.form['instructions']
+        category_id = request.form['category_id']
+        
+        # Update recipe details
+        recipe.Name = name
+        recipe.Description = description
+        recipe.Instructions = instructions
+        recipe.CategoryID = category_id
+
+        # Delete existing ingredients associated with the recipe
+        # db.session.query(RecipeIngredient).filter_by(RecipeID=recipe_id).delete()
+
+        # Retrieve form data for ingredients, quantities, and units, zipping them all together in chunks
+        ingredients = request.form.getlist('ingredient')
+        quantities = request.form.getlist('quantity')
+        units = request.form.getlist('unit')
+
+        # Remove commas from entered quantities because they're throwing errors on recipe creation.
+        cleaned_quantities = [quantity.replace(',', '') for quantity in quantities]
+
+        # Create Ingredient and RecipeIngredient objects
+        # It's structured this way because of the relationship between Ingredients and Recipe_Ingredients, and
+        # also because these three fields are one unit on the Create Recipe page.
+        # Create tuples from each set of these fields.
+        for ingredient_name, quantity, unit in zip(ingredients, cleaned_quantities, units):
+
+            # Check if the ingredient already exists
+            existing_ingredient = db.session.query(Ingredient).filter_by(Name=ingredient_name).first()
+
+             # If the ingredient does not exist, create a new ingredient entry
+            if not existing_ingredient:
+                new_ingredient = Ingredient(Name=ingredient_name)
+                db.session.add(new_ingredient)
+                db.session.commit()
+                # existing_ingredient = new_ingredient
+
+            # Create a new recipe_ingredient entry
+            new_recipe_ingredient = RecipeIngredient(RecipeID=recipe.RecipeID, IngredientID=existing_ingredient.IngredientID,
+                                                    Units=unit, Quantity=quantity, CreatedAt=datetime.now())
+            db.session.add(new_recipe_ingredient)
+            db.session.commit()
+
+
+        # Commit changes
+        db.session.commit()
+
+        flash('Recipe updated successfully.', 'success')
+        return redirect(url_for('view_recipe', recipe_id=recipe_id))
+
+    # If it's a GET request, render the edit_recipe template
+    categories = db.session.query(Category).all() 
+    ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
+    return render_template('edit_recipe.html', recipe=recipe, categories=categories, ingredients=ingredients)
+
+
+@app.route('/delete_recipe/<int:recipe_id>', methods=['POST'])
+def delete_recipe(recipe_id):
+
+    # Check if the user is logged in
+    if 'user_id' not in session:
+
+        # If not, go to login screen
+        return redirect(url_for('login'))
+
+    # Get the recipe from the database by recipe id
+    recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
+
+    # Check if the recipe exists
+    if not recipe:
+        flash("Recipe not found!", 'error')
+        return redirect(url_for('index'))
+
+    # Check if the logged in user is the owner of the recipe
+    if recipe.UserID != session['user_id']:
+        flash("You are not authorized to delete this recipe.", 'error')
+        return redirect(url_for('index'))
+
+    # Delete the recipe and associated recipe_ingredients entries
+    db.session.query(RecipeIngredient).filter_by(RecipeID=recipe_id).delete()
+    db.session.delete(recipe)
+    db.session.commit()
+
+    flash('Recipe deleted successfully.', 'success')
+    return redirect(url_for('index'))
+
+
+@app.route('/user_settings', methods=['GET', 'POST'])
+def user_settings():
+
+    # Check if the user is logged in
+    if 'user_id' not in session:
+        flash('You must be logged in to access user settings.', 'error')
+        return redirect(url_for('login'))
+
+    # Retrieve user data based on their current logged in user id
+    user_id = session['user_id']
+    user = db.session.query(Users).filter_by(UserID=user_id).first()
+
+    if request.method == 'POST':
+
+        # Check if the form is for changing the password
+        if 'old_password' in request.form:
+            old_password = request.form['old_password']
+            new_password = request.form['new_password']
+            confirm_password = request.form['confirm_password']
+
+            # Verify the old password
+            if user.Password != old_password:
+                flash('Incorrect old password. Please try again.', 'error')
+                return redirect(url_for('user_settings'))
+
+            # Check if the new password matches the confirm password
+            if new_password != confirm_password:
+                flash('New password and confirm password do not match.', 'error')
+                return redirect(url_for('user_settings'))
+
+            # Update the user's password
+            user.Password = new_password
+            db.session.commit()
+            flash('Password updated successfully.', 'success')
+            return redirect(url_for('user_settings'))
+
+        # Check if the form is for updating allergens and dislikes
+        elif 'allergens' in request.form and 'dislikes' in request.form:
+            allergens = request.form['allergens']
+            dislikes = request.form['dislikes']
+
+            # Update the user's allergens and dislikes
+            user.Allergens = allergens
+            user.Dislikes = dislikes
+            db.session.commit()
+            flash('Allergens and dislikes updated successfully.', 'success')
+            return redirect(url_for('user_settings'))
+
+    # Render the user settings page with user data
+    return render_template('user_settings.html', user=user)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

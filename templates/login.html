@@ -1,6 +1,9 @@
 {% extends 'base.html'%}
 
 {% block head %}
+{% if request.path == '/login' %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endif %}
 
 {% endblock %}
 

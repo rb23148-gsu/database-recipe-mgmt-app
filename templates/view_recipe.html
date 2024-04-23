@@ -7,8 +7,16 @@
 
 {% block body %}
 
+
 <h1>{{ recipe.Name }}</h1>
-<br>
+<!-- Display warnings in bold red font -->
+{% if warnings %}
+<ul>
+    {% for warning in warnings %}
+        <li><strong style="color: red;">{{ warning }}</strong></li>
+    {% endfor %}
+</ul>
+{% endif %}
 <p>By: {{ user_first_name }} {{ user_last_initial}}</p>
 
 <!-- If an image exists, display it! -->
