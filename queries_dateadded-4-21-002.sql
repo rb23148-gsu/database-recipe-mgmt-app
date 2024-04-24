@@ -7,6 +7,8 @@ CREATE TABLE Users (
     LastName VARCHAR(255) NOT NULL,
     Email VARCHAR(255) NOT NULL,
     Password VARCHAR(255) NOT NULL,
+    Allergens VARCHAR(255),
+    Dislikes VARCHAR(255),
     CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -68,10 +70,10 @@ VALUES ('Lunch');
 INSERT INTO Category (Name)
 VALUES ('Dinner');
 
--- DELETE FROM recipe;
--- DELETE FROM ingredients;
--- DELETE FROM recipe_ingredients;
-
+DELETE FROM recipe;
+DELETE FROM ingredients;
+DELETE FROM recipe_ingredients;
+DELETE FROM category;
 -- 4/21 notes:
 -- Removed RecipeID from Ingredients Table since it already exists in Recipe_Ingredients.
 -- ALTER TABLE ingredients DROP COLUMN RecipeID;
@@ -82,3 +84,10 @@ VALUES ('Dinner');
 -- Add an imageURL attribute to associate an image to a recipe.
 -- ALTER TABLE Recipe
 -- ADD COLUMN ImageURL VARCHAR(255);
+
+-- Add allergen and dislike fields so that recipes can be filtered.
+-- ALTER TABLE Users
+-- ADD COLUMN Allergens VARCHAR(255);
+
+-- ALTER TABLE Users
+-- ADD COLUMN Dislikes VARCHAR(255);
