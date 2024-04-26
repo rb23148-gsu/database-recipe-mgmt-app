@@ -85,32 +85,11 @@
     <p style="color: red;">{{ error }}</p>
 {% endif %}
 
-  {% block body %}
+{% block body %}
 
-  <h1>Recipes</h1>
 
-  {% if recipes %}
-  <div class="recipe-list">
-      {% for recipe in recipes %}
-      <div class="recipe">
-          <a href="/view_recipe/{{ recipe.RecipeID }}">
-              <h2>{{ recipe.Name }}</h2>
-          </a>
-          <p>{{ recipe.Description }}</p>
-          {% if recipe.ImageURL %}
-          <a href="/view_recipe/{{ recipe.RecipeID }}">
-              <img src="{{ recipe.ImageURL }}" alt="{{ recipe.Name }}">
-          </a>
-          {% endif %}
-          
-      </div>
-      {% endfor %}
-  </div>
-  {% else %}
-  <p>No recipes available.</p>
-  {% endif %}
   
   
-  {% endblock %}  
+{% endblock %}  
 </body>
 </html>
