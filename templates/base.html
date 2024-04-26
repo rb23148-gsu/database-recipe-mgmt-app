@@ -4,55 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('images', filename='favicon.ico') }}">
+
     <!-- Creates a block in the template to insert code on other pages that inherit this template-->
     {% block head %}
     
     {% endblock %}
 </head>
 <body>
-  <h1>Welcome to the Recipe Management App!</h1>
+    <a href="/">
+        <div id="header-title">
+            <img src="{{ url_for('images', filename='panegg100x100.png') }}" alt="Let 'Em Cook">
+            <h1>Let 'Em Cook</h1>
+        </div>
+    </a>    
+    
+    <div id="user-panel">
+        
+        <!-- If the user is NOT logged in and not on the login page, show the login link -->
+        {% if 'user_id' not in session and request.path != '/login' %}
+        <li><a href="/login">Login</a></li>
+        {% endif %}
 
-  <!-- If the user is logged in, show the user's name and a logout button -->
-  {% if 'user_id' in session %}
-    Hello, {{ session['user_first_name'] }}!
-    <form action="{{ url_for('logout') }}" method="post">
-      <button type="submit" class="btn">Logout</button>
-  </form>
-  {% endif %}
+        <div id="user-panel-greeting">
+            <!-- If the user is logged in, show the user's name and a logout button -->
+            {% if 'user_id' in session %}
+            Hello, {{ session['user_first_name'] }}!
+            
+        </div>
+        
+        <div id="user-panel-login-logout">
+            <form action="{{ url_for('logout') }}" method="post">
+                <button id="logout-button" type="submit" class="btn">Logout</button>
+            </form>
+            <!-- <a id="logout-button "href="{{ url_for('logout') }}" class="btn">Logout</a> -->
+            {% endif %}
+        </div>
+        
+
+    </div>
+  
 
 
   <!-- DISPLAY NAVBAR (with conditional logic based on filepath and if user is logged in)-->
   <nav>
     <ul>
         <!-- If the user is not on the homepage, show the link to the homepage -->
-        {% if request.path != '/' %}
+        <!-- {% if request.path != '/' %}
             <li><a href="/">Home</a></li>
-        {% endif %}
-
-        <!-- If the user is NOT logged in and not on the login page, show the login link -->
-        {% if 'user_id' not in session and request.path != '/login' %}
-            <li><a href="/login">Login</a></li>
-        {% endif %}
-
-        {% if 'user_id' in session and request.path != '/user_settings' %}
-            <li><a href="/user_settings">User Settings</a></li>
-        {% endif %}
+        {% endif %} -->
 
         <!-- If the user is logged in, show the create recipe link -->
         {% if 'user_id' in session and request.path != '/create_recipe' %}
             <li><a href="/create_recipe">Create Recipe</a></li>
         {% endif %}
 
+        <!--  If the user is logged in and not in user_settings, show them the link to it. -->
+        {% if 'user_id' in session and request.path != '/user_settings' %}
+            <li><a href="/user_settings">User Settings</a></li>
+        {% endif %}
+
+        
+
         <!-- If the user is logged in and is on a recipe page owned by them, show the delete recipe button -->    
         {% if 'user_id' in session and request.path.startswith('/view_recipe/') %}
             {% if recipe and recipe.UserID == session['user_id'] %}
-            <li><a href="/edit_recipe/{{ recipe.RecipeID }}">Edit Recipe</a></li>
+            <li><a href="/edit_recipe/{{ recipe.RecipeID }}">Edit This Recipe</a></li>
             {% endif %}
         {% endif %}
 
         {% if 'user_id' in session and request.path.startswith('/view_recipe/') %}
             {% if recipe and recipe.UserID == session['user_id'] %}
-            <!-- <li><a href="/delete_recipe/{{ recipe.RecipeID }}">Delete Recipe</a></li> -->
+            <!-- <li><a href="/delete_recipe/{{ recipe.RecipeID }}">Delete This Recipe</a></li> -->
             <form id="delete-form" action="{{ url_for('delete_recipe', recipe_id=recipe.RecipeID) }}" method="post">
                 <input type="hidden" name="recipe_id" value="{{ recipe.RecipeID }}">
                 <button type="submit">Delete Recipe</button>
@@ -60,17 +83,16 @@
             {% endif %}
         {% endif %}
 
+            
+        
+
         
     </ul>
 </nav>
 
-{% if recipe %}
-<ul>
-    <li><a href="/view_recipe/{{ prev_recipe_id }}">Previous</a></li>
-    <li><a href="/view_recipe/{{ next_recipe_id }}">Next</a></li>
-</ul>
+
     
-{% endif %}
+
 
 
 {% if 'error' in session %}

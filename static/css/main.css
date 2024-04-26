@@ -1,4 +1,4 @@
-/* CSS RESET */
+/* CSS RESET
 
 /* http://meyerweb.com/eric/tools/css/reset/ 
    v2.0 | 20110126
@@ -48,10 +48,72 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
-END CSS RESET */
+/*END CSS RESET */
 
 body{
     font-family: sans-serif; 
 	max-width:700px;
 	margin: auto;   
+}
+
+img{
+	max-width: 600px;
+	margin: auto;
+}
+
+.recipe{
+	margin: auto;
+	width:75%;
+}
+#user-panel > li {
+	list-style: none;
+}
+
+nav > ul > li{
+	display: inline-block;
+	justify-content:space-between;
+	margin-right: 10px;
+	list-style: none;
+}
+
+#user-panel{
+	display: flex;
+	justify-content: space-between;
+}
+
+#logout-button{
+	float: right;
+}
+
+#delete-form{
+	float:right;
+}
+
+#prev-next-recipe-buttons > ul > li{
+	text-align: center;
+}
+
+#prev-next-recipe-buttons > ul > li{
+	flex-grow: 1;
+}
+
+#recipe-buttons{
+	display: flex;
+    justify-content: space-between; 
+    list-style: none; 
+	padding-top: 2em;
+}
+
+#header-title{
+	display:inline-flex;
+	align-items:center;
+	/* justify-content:flex-start; */
+}
+
+#header-title > h1{
+	
+}
+
+#header-title > img{
+	padding-right:2em;
 }

@@ -7,7 +7,14 @@
 
 {% block body %}
 
-
+<div id="prev-next-recipe-buttons">
+    {% if recipe %}
+    <ul id="recipe-buttons">
+        <li><a href="/view_recipe/{{ prev_recipe_id }}">&laquo;Previous Recipe</a></li>
+        <li><a href="/view_recipe/{{ next_recipe_id }}">Next Recipe&raquo;</a></li>
+    </ul>
+    {% endif %}
+</div>
 <h1>{{ recipe.Name }}</h1>
 <!-- Display warnings in bold red font -->
 {% if warnings %}
@@ -26,7 +33,7 @@
 
 <h3>Description:</h3>
 <p>{{ recipe.Description }}</p>
-<br>
+
 <!-- Use a Jinja2 loop to show all available ingredients for a recipe!-->
 <h3>Ingredients:</h3>
     <ul>
@@ -35,7 +42,6 @@
         {% endfor %}
     </ul>
 
-<br>
 <p><strong>Instructions:</strong></p>
 <p>{{ recipe.Instructions }}</p>
 

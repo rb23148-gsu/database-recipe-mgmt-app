@@ -46,7 +46,7 @@ UPLOAD_FOLDER = 'images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Define allowed image extensions.
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'ico'}
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(app)
@@ -331,9 +331,12 @@ def allowed_file(filename):
 
 
 # Define a route to serve static image files
+# @app.route('/images/<filename>')
+# def uploaded_file(filename):
+#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 @app.route('/images/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+def images(filename):
+    return send_from_directory('images', filename)
 
 
 
