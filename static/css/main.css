@@ -104,14 +104,15 @@ nav > ul > li{
 	padding-top: 2em;
 }
 
+.recipe-image{
+	display:block;
+	margin:auto;
+}
+
 #header-title{
 	display:inline-flex;
 	align-items:center;
 	/* justify-content:flex-start; */
-}
-
-#header-title > h1{
-	
 }
 
 #header-title > img{
