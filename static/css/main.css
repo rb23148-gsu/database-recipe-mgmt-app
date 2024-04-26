@@ -63,8 +63,14 @@ img{
 
 .recipe{
 	margin: auto;
-	width:75%;
+	width:85%;
 }
+
+.recipe img{
+	display:block;
+	margin:auto;
+}
+
 #user-panel > li {
 	list-style: none;
 }
