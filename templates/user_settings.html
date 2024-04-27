@@ -50,6 +50,25 @@
         <input type="submit" value="Update Allergens and Dislikes">
     </form>
 
+    <!-- Display user's recipes, including an aggregate function. -->
+<h2>Your Recipes ({{ recipe_count }}):</h2>
+<table border="1" id="user-recipes-table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for recipe in user_recipes %}
+        <tr>
+            <td><a href="{{ url_for('view_recipe', recipe_id=recipe.RecipeID) }}">{{ recipe.Name }}</a></td>
+            <td>{{ recipe.Description }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
    
 
 {% endblock %} 

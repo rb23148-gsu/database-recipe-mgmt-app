@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, render_template, url_for, session, jsonify, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import func
 from datetime import datetime
 import os
 import dotenv
@@ -97,10 +98,12 @@ def get_user_attributes():
         # Fetch user attributes based on user ID
         user_attributes = db.session.query(Users).filter_by(UserID=user_id).first()
         if user_attributes:
-            allergens = user_attributes.Allergens.split(",") if hasattr(user_attributes, 'Allergens') else []
-            dislikes = user_attributes.Dislikes.split(",") if hasattr(user_attributes, 'Dislikes') else []
+            allergens = user_attributes.Allergens.split(",") if user_attributes.Allergens is not None else []
+            dislikes = user_attributes.Dislikes.split(",") if user_attributes.Dislikes is not None else []
             return allergens, dislikes
-    return None, None
+    
+    # Return empty lists because returnine None causes errors to throw.
+    return [], []
 
 
 def check_user_preferences(recipe):
@@ -108,11 +111,12 @@ def check_user_preferences(recipe):
     # Retrieve user attributes for allergens and dislikes
     allergens, dislikes = get_user_attributes()
 
-    # Create a set for unique warning messages
-    warnings = set()
+    # Define allergen and dislike warning list.
+    allergen_warning = []
+    dislike_warning = []
 
     # Check allergens and dislikes if they are present in the user's profile.
-    if allergens is not None and dislikes is not None:
+    if allergens and dislikes:
 
         # Get ingredients from the recipe and iterate over them, splitting them, and comparing them with the user's preferences.
         ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe.RecipeID).all()
@@ -120,18 +124,21 @@ def check_user_preferences(recipe):
             ingredient_name = ingredient.Name.split()  
             for keyword in ingredient_name:
                 keyword = keyword.strip().lower()
-                print('keyword: ', keyword)
 
                 # If present, log a warning message to be sent to appear on the page.
                 for allergen in allergens:
                     if allergen.strip().lower() == keyword:
-                        warnings.add("This recipe contains ingredients you are allergic to.")
+                        matching_allergen = allergen
+                        allergen_warning.append("This recipe contains ingredients you are allergic to: " + matching_allergen)
                         break
+
                 for dislike in dislikes:
                     if dislike.strip().lower() == keyword:
-                        warnings.add("This recipe contains ingredients you dislike.")
+                        matching_dislike = dislike
+                        dislike_warning.append("This recipe contains ingredients you dislike: " + matching_dislike)
                         break
-    return warnings
+                    
+    return allergen_warning, dislike_warning
 
 
 # Test route to print all table names in the db
@@ -331,9 +338,6 @@ def allowed_file(filename):
 
 
 # Define a route to serve static image files
-# @app.route('/images/<filename>')
-# def uploaded_file(filename):
-#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 @app.route('/images/<filename>')
 def images(filename):
     return send_from_directory('images', filename)
@@ -480,9 +484,10 @@ def view_recipe(recipe_id):
 
     # Query the database for the recipe by its id, creating a recipe object.
     recipe = db.session.query(Recipe).filter_by(RecipeID=recipe_id).first()
-    # Check user preferences for this recipe
-    warnings = check_user_preferences(recipe)
-    print('warnings: ', warnings)
+
+    # Check user preferences for this recipe to see what warnings to generate, and with what ingredients
+    allergen_warnings, dislike_warnings = check_user_preferences(recipe)
+
     # If the recipe does exist, get the recipe information
     if recipe:
 
@@ -518,17 +523,11 @@ def view_recipe(recipe_id):
     
     # Get the list of ingredients, quantity, and units for the recipe  by joining the Recipe_Ingredient table to the Ingredients table based on the given recipeID.
     ingredients = db.session.query(RecipeIngredient.Quantity, RecipeIngredient.Units, Ingredient).join(RecipeIngredient).filter_by(RecipeID=recipe_id).all()
-    # print("ingredients from the query: ", ingredients)
-
-    # Debug print to console
-    # print('Length of ingredients is: ', len(ingredients))
-    # for quantity, unit, ingredient in ingredients:
-    #     print(f'Ingredient: Quantity: {quantity}, Units: {unit}, {ingredient.Name}')
     
     # Return the view_recipe.html view with recipe, ingredient, user data, and prev/next Recipe ids for an endless recipe loop.
     return render_template('view_recipe.html', recipe=recipe, ingredients=ingredients, 
                            user_first_name=user_first_name, user_last_initial=user_last_initial, 
-                           prev_recipe_id=prev_recipe_id, next_recipe_id=next_recipe_id, warnings=warnings)
+                           prev_recipe_id=prev_recipe_id, next_recipe_id=next_recipe_id, allergen_warnings=allergen_warnings, dislike_warnings=dislike_warnings)
 
 
 
@@ -653,6 +652,10 @@ def user_settings():
     # Retrieve user data based on their current logged in user id
     user_id = session['user_id']
     user = db.session.query(Users).filter_by(UserID=user_id).first()
+    user_recipes = db.session.query(Recipe).filter_by(UserID=user_id).all()
+
+    # Use SQLAlchemy's func.count to count the number of recipes for the given user ID
+    recipe_count = db.session.query(func.count(Recipe.RecipeID)).filter_by(UserID=user_id).scalar()
 
     if request.method == 'POST':
 
@@ -691,7 +694,7 @@ def user_settings():
             return redirect(url_for('user_settings'))
 
     # Render the user settings page with user data
-    return render_template('user_settings.html', user=user)
+    return render_template('user_settings.html', user=user, recipe_count=recipe_count, user_recipes=user_recipes)
 
 
 if __name__ == "__main__":

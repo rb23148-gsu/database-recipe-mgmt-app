@@ -17,9 +17,27 @@
 </div>
 <h1>{{ recipe.Name }}</h1>
 <!-- Display warnings in bold red font -->
-{% if warnings %}
+<!-- {% if warnings %}
 <ul>
     {% for warning in warnings %}
+        <li><strong style="color: red;">{{ warning }}</strong></li>
+    {% endfor %}
+</ul>
+{% endif %} -->
+
+<!-- Display allergen warnings if they exist -->
+{% if allergen_warnings %}
+<ul>
+    {% for warning in allergen_warnings %}
+        <li><strong style="color: red;">{{ warning }}</strong></li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<!-- Display dislike warnings if they exist -->
+{% if dislike_warnings %}
+<ul>
+    {% for warning in dislike_warnings %}
         <li><strong style="color: red;">{{ warning }}</strong></li>
     {% endfor %}
 </ul>
