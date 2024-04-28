@@ -12,6 +12,7 @@
     {% endblock %}
 </head>
 <body>
+    <!-- Define a header with logo that when clicked will go to the index. -->
     <a href="/">
         <div id="header-title">
             <img src="{{ url_for('images', filename='panegg100x100.png') }}" alt="Let 'Em Cook">
@@ -37,7 +38,6 @@
             <form action="{{ url_for('logout') }}" method="post">
                 <button id="logout-button" type="submit" class="btn">Logout</button>
             </form>
-            <!-- <a id="logout-button "href="{{ url_for('logout') }}" class="btn">Logout</a> -->
             {% endif %}
         </div>
         
@@ -49,10 +49,6 @@
   <!-- DISPLAY NAVBAR (with conditional logic based on filepath and if user is logged in)-->
   <nav>
     <ul>
-        <!-- If the user is not on the homepage, show the link to the homepage -->
-        <!-- {% if request.path != '/' %}
-            <li><a href="/">Home</a></li>
-        {% endif %} -->
 
         <!-- If the user is logged in, show the create recipe link -->
         {% if 'user_id' in session and request.path != '/create_recipe' %}
@@ -89,10 +85,6 @@
         
     </ul>
 </nav>
-
-
-    
-
 
 
 {% if 'error' in session %}

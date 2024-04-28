@@ -23,6 +23,7 @@ from werkzeug.utils import secure_filename
 # Consider thorough input validation if this project continues beyond this class, both with JS and backend.
 # Figure out how to use the non-deprecated AutomapBase.prepare.reflect because apparently "Reflection is enabled when AutomapBase.prepare.autoload_with is passed."
 # Review project requirements to make sure I'm still on track.
+# Tracking moved from here to Github issues for the project.
 
 
 # Load sensitive data in .env file (db username and password in a separate file to be excluded from the repo)
@@ -91,21 +92,27 @@ def index():
         return render_template('index.html', recipes=recipes, error=error)
     
 
+# Get Allergens and Dislikes if not None.
 def get_user_attributes():
+
     # Retrieve user ID from the session
     user_id = session.get('user_id')
+
     if user_id:
+        
         # Fetch user attributes based on user ID
         user_attributes = db.session.query(Users).filter_by(UserID=user_id).first()
+
+        # Get allergens and dislikes if not None. Split them into strings for later use to be compared to recipe ingredients.
         if user_attributes:
             allergens = user_attributes.Allergens.split(",") if user_attributes.Allergens is not None else []
             dislikes = user_attributes.Dislikes.split(",") if user_attributes.Dislikes is not None else []
             return allergens, dislikes
     
-    # Return empty lists because returnine None causes errors to throw.
+    # Return empty lists because returning None causes errors to throw.
     return [], []
 
-
+# Compare allergens and dislikes to recipe ingredients in order to generate warnings on the page.
 def check_user_preferences(recipe):
 
     # Retrieve user attributes for allergens and dislikes
@@ -174,6 +181,7 @@ def print_db_info():
 
     # Return as HTML with br element between entries
     return '<br>'.join(info)
+
 
 # Test route to print the entire db's records.
 @app.route('/print_all_records')
@@ -343,7 +351,7 @@ def images(filename):
     return send_from_directory('images', filename)
 
 
-
+# Route to create recipes.
 @app.route('/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
 
@@ -531,9 +539,10 @@ def view_recipe(recipe_id):
 
 
 
-
+# Route to edit recipe by its id.
 @app.route('/edit_recipe/<int:recipe_id>', methods=['GET', 'POST'])
 def edit_recipe(recipe_id):
+
     # Check if the user is logged in
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -564,10 +573,7 @@ def edit_recipe(recipe_id):
         recipe.Instructions = instructions
         recipe.CategoryID = category_id
 
-        # Delete existing ingredients associated with the recipe
-        # db.session.query(RecipeIngredient).filter_by(RecipeID=recipe_id).delete()
-
-        # Retrieve form data for ingredients, quantities, and units, zipping them all together in chunks
+        # Retrieve form data for ingredients, quantities, and units.
         ingredients = request.form.getlist('ingredient')
         quantities = request.form.getlist('quantity')
         units = request.form.getlist('unit')
@@ -610,6 +616,7 @@ def edit_recipe(recipe_id):
     return render_template('edit_recipe.html', recipe=recipe, categories=categories, ingredients=ingredients)
 
 
+# Route to delete a recipe by its id.
 @app.route('/delete_recipe/<int:recipe_id>', methods=['POST'])
 def delete_recipe(recipe_id):
 

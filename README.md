@@ -23,7 +23,7 @@
 
 7. In the project root directory, (if you didn't use the .bat file) create a file called '.env', no quotes, and add the line 'USERNAME=yourUsername' without quotes. On the next line, add 'MYSQL_PASSWORD=yourPassword' without quotes. Replace yourUsername and yourPassword with your information to log in to your database. Save it.
 
-8. In the project root directory, (if you didn't use the .bat file) create a file called '.gitignore', no quotes. On the first line, put '.env' without quotes, then save and exit. This prevents your password from being hardcoded into the program, and also from being uploaded to Github, which isn't necessarily a huge issue for this project, but it's good practice.
+8. In the project root directory, (if you didn't use the .bat file) create a file called '.gitignore', no quotes. On the first line, put '.env' without quotes, then put '.venv/' without quotes, then save and exit. This prevents your password from being hardcoded into the program, and also from being uploaded to Github, which isn't necessarily a huge issue for this project, but it's good practice. The .venv/ line prevents thousands of virtual environment files from being uploaded to Github.
 
 
 # Next, set up the app locally:
@@ -48,3 +48,6 @@
 
 9. PROFIT!!!
 
+# Using/Testing the app.
+
+1. There is a .sql dump file that can be used to build a database using the existing information in the file.
