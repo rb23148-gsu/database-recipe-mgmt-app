@@ -27,7 +27,7 @@
 
         <h2>Ingredients</h2>
         <div id="ingredient-fields">
-
+            {% for quantity, unit, ingredient in ingredients %}
             <div>
                 <label for="quantity">Quantity:</label>
                 <input type="text" id="quantity_{{ loop.index }}" name="quantity_{{ loop.index }}" value="{{ quantity }}" required>
@@ -38,7 +38,7 @@
                 <label for="ingredient">Ingredient:</label>
                 <input type="text" id="ingredient_{{ loop.index }}" name="ingredient_{{ loop.index }}" value="{{ ingredient.Name }}" required>
             </div>
-
+            {% endfor %}
         </div>
         <button type="button" id="add-ingredient">Add Ingredient</button><br><br>
         <button type="submit">Save Changes</button>
